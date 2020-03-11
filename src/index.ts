@@ -28,7 +28,8 @@ interface MetaData {
 }
 
 export const handler = async (event: S3Event): Promise<string> => {
-  console.log(JSON.stringify(event, null, 2));
+  // console.log(JSON.stringify(event, null, 2));
+
   // Check originator whitelist
   const originatorRegex = /([a-z\.]+)\//;
   const metaDataS3Key = event.Records[0].s3.object.key;
@@ -89,6 +90,7 @@ export const handler = async (event: S3Event): Promise<string> => {
             SNSTopicArn: SNS_CHANNEL
           }
         };
+        console.log(JSON.stringify(params, null, 2));
         const textractReponse = await textract
           .startDocumentAnalysis(params)
           .promise();
