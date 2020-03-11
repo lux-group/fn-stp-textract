@@ -10,7 +10,9 @@ The function is fired by an S3 action whenever a new `*_meta.json` file signals 
 
 See config files in `./deploy` folder for lambda naming, S3 inbox and S3 output bucket names.
 
-The ORIGINATORS environment variable determines which domains will be accepted for processing.
+The `WHITELIST_ORIGINATORS` environment variable determines domains for which emails will be accepted for processing (comma separated)
+
+The `WHITELIST_REGEX` environment variable determines which file attachment is to be accepted for processing.
 
 ## Deployment
 
@@ -28,13 +30,13 @@ and run the following:
 TEST
 
 ```
-$ ORIGINATORS=supplies@acme.test yarn deploy-test
+$ WHITELIST_ORIGINATORS=supplies@acme.test yarn deploy-test
 ```
 
 PRODUCTION
 
 ```
-$ ORIGINATORS=supplies@acme.test yarn deploy-production
+$ WHITELIST_ORIGINATORS=supplies@acme.test yarn deploy-production
 ```
 
 ## Logs
