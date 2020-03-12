@@ -84,13 +84,12 @@ export const handler = async (event: S3Event): Promise<string> => {
             }
           },
           FeatureTypes: ["TABLES", "FORMS"],
-          JobTag: "test", //metaDataS3Key,
+          JobTag: originator,
           NotificationChannel: {
             RoleArn: SNS_ROLE_ARN,
             SNSTopicArn: SNS_CHANNEL
           }
         };
-        console.log(JSON.stringify(params, null, 2));
         const textractReponse = await textract
           .startDocumentAnalysis(params)
           .promise();
