@@ -10,9 +10,12 @@ The function is fired by an S3 action whenever a new `*_meta.json` file signals 
 
 See config files in `./deploy` folder for lambda naming, S3 inbox and S3 output bucket names.
 
-The `WHITELIST_ORIGINATORS` environment variable determines domains for which emails will be accepted for processing (comma separated)
+The `ORIGINATORS` environment variable determines domains for which emails will be accepted for processing (comma separated). After each domain a regex express to filter required files to extact is specified in curly braces.
 
-The `WHITELIST_REGEX` environment variable determines which file attachment is to be accepted for processing.
+e.g. the following will Textract any PDF files sent from `gmail.com`, but only PDF files with the word `INVOICE` in them from `luxuryescapes.com`
+```
+gmail.com{.*(PDF|pdf)},luxuryescapes.com{.*INVOICE.*(PDF|pdf)}`
+```
 
 ## Deployment
 
@@ -30,13 +33,13 @@ and run the following:
 TEST
 
 ```
-$ WHITELIST_ORIGINATORS=supplies@acme.test yarn deploy-test
+$ yarn deploy-test
 ```
 
 PRODUCTION
 
 ```
-$ WHITELIST_ORIGINATORS=supplies@acme.test yarn deploy-production
+$ FN_ORIGINATORS=gmail.com{.*(PDF|pdf)},luxuryescapes.com{.*INVOICE.*(PDF|pdf)} yarn deploy-production
 ```
 
 ## Logs

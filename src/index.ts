@@ -3,8 +3,7 @@ import {
   DATA_S3_BUCKET_NAME,
   SNS_CHANNEL,
   SNS_ROLE_ARN,
-  WHITELIST_ORIGINATORS,
-  WHITELIST_REGEX
+  ORIGINATORS
 } from "./config";
 
 const s3 = new S3();
@@ -26,6 +25,9 @@ interface MetaData {
   textAsHtml: string;
   attachments: Attachment[];
 }
+interface RegexMap {
+  [key: string]: RegExp;
+}
 
 export const handler = async (event: S3Event): Promise<string> => {
   // console.log(JSON.stringify(event, null, 2));
@@ -36,15 +38,35 @@ export const handler = async (event: S3Event): Promise<string> => {
   const originatorMatch = metaDataS3Key.match(originatorRegex);
 
   let metaData;
+  let err = "";
 
   if (originatorMatch?.length !== 2) {
-    return "Error: Could not determine OriginatorOrg from email data.";
+    return "Error: Could not determine originator from email data.";
   }
   const originator = originatorMatch[1];
 
-  const whitelist: string[] = WHITELIST_ORIGINATORS.split(",");
-  if (!whitelist.some(w => originator === w)) {
-    return `Info: OriginatorOrg: ${originator} is not whitelisted.`;
+  // ORGINATORS is a comma-delimited list of domains{regex file filter}
+  // e.g.: acme.com{.*INVOICE*.\.PDF};gmail.com{.*}
+  const whitelist = ORIGINATORS.split(",");
+  const allowedOriginators: string[] = [];
+  const regexMap: RegexMap = {};
+  whitelist.forEach(w => {
+    const match = w.match(/(.*){(.*)}/);
+    if (match?.length !== 3) {
+      err = `Invalid whitelist entry in ORIGINATORS: ${w}`;
+      console.log(err);
+      return err;
+    }
+    const allowedOriginator = match[1];
+    const regex = match[2];
+    allowedOriginators.push(allowedOriginator);
+    regexMap[allowedOriginator] = new RegExp(regex);
+  });
+
+  if (!allowedOriginators.some(w => originator === w)) {
+    err = `Warning: OriginatorOrg: ${originator} is not whitelisted.`;
+    console.log(err);
+    return err;
   }
 
   console.log(
@@ -61,18 +83,19 @@ export const handler = async (event: S3Event): Promise<string> => {
     return err;
   }
 
-  const fileNameRegex = new RegExp(WHITELIST_REGEX);
+  const fileNameRegex = regexMap[originator];
   const attachments = metaData.attachments.filter((a: Attachment) =>
     a.filename.match(fileNameRegex)
   );
 
   if (!attachments.length) {
-    return `Error: attachments for ${metaDataS3Key} are not whitelisted.`;
+    err = `Warning : No attachments for ${originator} are whitelisted.`;
+    console.log(err);
+    return err;
   }
-  console.log(JSON.stringify(attachments, null, 2));
+  console.log(`Found ${attachments.length} attachment(s) to process...`);
 
   // Send PDF to Textract and enqueue meta data
-
   try {
     await Promise.all(
       attachments.map(async (a: Attachment) => {
@@ -93,7 +116,9 @@ export const handler = async (event: S3Event): Promise<string> => {
         const textractReponse = await textract
           .startDocumentAnalysis(params)
           .promise();
-        console.log(JSON.stringify(textractReponse, null, 2));
+        console.log(
+          `'${a.filename}' sent to Textract. JobId: ${textractReponse.JobId}`
+        );
       })
     );
   } catch (err) {
