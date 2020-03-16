@@ -10,7 +10,12 @@ The function is fired by an S3 action whenever a new `*_meta.json` file signals 
 
 See config files in `./deploy` folder for lambda naming, S3 inbox and S3 output bucket names.
 
-The ORIGINATORS environment variable determines which domains will be accepted for processing.
+The `ORIGINATORS` environment variable determines domains for which emails will be accepted for processing (comma separated). After each domain a regex express to filter required files to extact is specified in curly braces.
+
+e.g. the following will Textract any PDF files sent from `gmail.com`, but only PDF files with the word `INVOICE` in them from `luxuryescapes.com`
+```
+gmail.com{.*(PDF|pdf)},luxuryescapes.com{.*INVOICE.*(PDF|pdf)}`
+```
 
 ## Deployment
 
@@ -28,13 +33,13 @@ and run the following:
 TEST
 
 ```
-$ ORIGINATORS=supplies@acme.test yarn deploy-test
+$ yarn deploy-test
 ```
 
 PRODUCTION
 
 ```
-$ ORIGINATORS=supplies@acme.test yarn deploy-production
+$ FN_ORIGINATORS=gmail.com{.*(PDF|pdf)},luxuryescapes.com{.*INVOICE.*(PDF|pdf)} yarn deploy-production
 ```
 
 ## Logs

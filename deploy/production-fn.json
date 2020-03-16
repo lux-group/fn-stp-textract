@@ -4,8 +4,8 @@
   "Role": "arn:aws:iam::801230920622:role/le-prod-stp-execution",
   "Handler": "index.handler",
   "Description": "STP Process Inbox Production",
-  "Timeout": 10,
-  "MemorySize": 256,
+  "Timeout": 5,
+  "MemorySize": 128,
   "VpcConfig": {
     "SubnetIds": [
     ],
@@ -14,10 +14,12 @@
   },
   "Environment": {
     "Variables": {
-      "INBOX_S3_BUCKET_NAME": "le-prod-stp-raw-inbox",
       "DATA_S3_BUCKET_NAME": "le-prod-stp-email-data",
       "NODE_ENV": "production",
-      "APP_NAME": "prod-fn-stp-textract"
+      "APP_NAME": "prod-fn-stp-textract",
+      "ORIGINATORS": "",
+      "SNS_CHANNEL": "arn:aws:sns:ap-southeast-2:801230920622:AmazonTextract-prod-le",
+      "SNS_ROLE_ARN": "arn:aws:iam::801230920622:role/AWSSNSFullAccessRole"
     }
   },
   "KMSKeyArn": "",
